@@ -58,21 +58,18 @@ class IMDbCrawler:
         """
         Save the crawled files into json
         """
-        # crawled_list = list(self.crawled)
-        # with open('IMDB_crawled.json', 'r') as f:
-        #     file_data = json.load(f)
 
-        with open('../IMDB_crawled.json', 'w') as f:
+        with open('../tests/IMDB_crawled.json', 'w') as f:
             json.dump(self.crawled, f, indent=4) 
 
     def read_from_file_as_json(self):
         """
         Read the crawled files from json
         """
-        with open('IMDB_crawled.json', 'r') as f:
+        with open('../tests/IMDB_crawled.json', 'r') as f:
             self.crawled = json.load(f)
 
-        with open('IMDB_not_crawled.json', 'r') as f:
+        with open('../tests/IMDB_not_crawled.json', 'r') as f:
             self.not_crawled = json.load(f)
 
         if self.not_crawled is not None:
@@ -80,7 +77,7 @@ class IMDbCrawler:
                 if obj in self.not_crawled:
                     self.not_crawled.remove(obj)
 
-        with open('IMDB_not_crawled.json', 'w') as f:
+        with open('../tests/IMDB_not_crawled.json', 'w') as f:
             json.dump(self.not_crawled, f)
 
         for obj in self.crawled:
@@ -357,9 +354,9 @@ class IMDbCrawler:
                 if directors:
                     return directors
                 else:
-                    return "Directors not found"
+                    return ["Directors not found"]
             else:
-                return "Script tag not found"
+                return ["Script tag not found"]
         except Exception as e:
             print("Failed to get directors:", e)
 
@@ -384,9 +381,9 @@ class IMDbCrawler:
                 if stars:
                     return stars
                 else:
-                    return "Stars not found"
+                    return ["Stars not found"]
             else:
-                return "Script tag not found"
+                return ["Script tag not found"]
         except Exception as e:
             print("Failed to get stars:", e)
 
@@ -411,9 +408,9 @@ class IMDbCrawler:
                 if writers:
                     return writers
                 else:
-                    return "Writers not found"
+                    return ["Writers not found"]
             else:
-                return "Script tag not found"
+                return ["Script tag not found"]
         except Exception as e:
             print("Failed to get writers:", e)
 
