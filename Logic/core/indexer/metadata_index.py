@@ -17,6 +17,7 @@ class Metadata_index:
         
         #TODO
         self.path = path
+        self.index, self.documents = self.read_documents()
         self.metadata_index = self.create_metadata_index()
         
 
@@ -27,11 +28,13 @@ class Metadata_index:
         """
         
         #TODO
-        self.index = {}
+        index = {}
         # self.index['documents'] = Index_reader(self.path, index_name=Indexes.DOCUMENTS).index
-        self.index[Indexes.STARS.value] = Index_reader(self.path, index_name=Indexes.STARS).index
-        self.index[Indexes.GENRES.value] = Index_reader(self.path, index_name=Indexes.GENRES).index
-        self.index[Indexes.SUMMARIES.value] = Index_reader(self.path, index_name=Indexes.SUMMARIES).index
+        index[Indexes.STARS.value] = Index_reader(self.path, index_name=Indexes.STARS).index
+        index[Indexes.GENRES.value] = Index_reader(self.path, index_name=Indexes.GENRES).index
+        index[Indexes.SUMMARIES.value] = Index_reader(self.path, index_name=Indexes.SUMMARIES).index
+        document = Index_reader(self.path, index_name=Indexes.DOCUMENTS).index
+        return index, document
 
     def create_metadata_index(self):    
         """

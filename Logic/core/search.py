@@ -93,6 +93,8 @@ class SearchEngine:
             for term in field_scores.keys():
                 for doc_id in field_scores[term].keys():
                     final_scores[doc_id] += weights[field] * field_scores[term][doc_id]
+        final_scores = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
+        
 
     def find_scores_with_unsafe_ranking(self, query, method, weights, max_results, scores):
         """
@@ -113,6 +115,7 @@ class SearchEngine:
         """
 
         for field in weights.keys():
+            
             scores[field] = {}
             for tier in ["first_tier", "second_tier", "third_tier"]:
                 #TODO
@@ -149,7 +152,7 @@ class SearchEngine:
             The scores of the documents.
         """
 
-        for field in weights:
+        for field in weights.keys():
             #TODO
             local_index = self.tiered_index[field]
             all_doc_ids = list(set(doc_id for term_dict in local_index.values() for doc_id in local_index.keys()))
@@ -165,7 +168,7 @@ class SearchEngine:
                 scores[field] = sc.compute_socres_with_okapi_bm25(query=query, average_document_field_length=avdl, document_lengths=doc_lengths)
             else:
                 scores[field] = sc.compute_scores_with_vector_space_model(query=query, method=method)
-
+            
         return scores
 
 
