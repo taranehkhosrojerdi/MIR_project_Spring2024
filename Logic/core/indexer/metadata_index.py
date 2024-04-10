@@ -28,10 +28,10 @@ class Metadata_index:
         
         #TODO
         self.index = {}
-        self.index['documents'] = Index_reader(self.path, index_name=Indexes.DOCUMENTS).index
-        self.index['stars'] = Index_reader(self.path, index_name=Indexes.STARS).index
-        self.index['genres'] = Index_reader(self.path, index_name=Indexes.GENRES).index
-        self.index['summaries'] = Index_reader(self.path, index_name=Indexes.SUMMARIES).index
+        # self.index['documents'] = Index_reader(self.path, index_name=Indexes.DOCUMENTS).index
+        self.index[Indexes.STARS.value] = Index_reader(self.path, index_name=Indexes.STARS).index
+        self.index[Indexes.GENRES.value] = Index_reader(self.path, index_name=Indexes.GENRES).index
+        self.index[Indexes.SUMMARIES.value] = Index_reader(self.path, index_name=Indexes.SUMMARIES).index
 
     def create_metadata_index(self):    
         """
@@ -39,9 +39,9 @@ class Metadata_index:
         """
         metadata_index = {}
         metadata_index['averge_document_length'] = {
-            'stars': self.get_average_document_field_length('stars'),
-            'genres': self.get_average_document_field_length('genres'),
-            'summaries': self.get_average_document_field_length('summaries')
+            'stars': self.get_average_document_field_length(Indexes.STARS.value),
+            'genres': self.get_average_document_field_length(Indexes.GENRES.value),
+            'summaries': self.get_average_document_field_length(Indexes.SUMMARIES.value)
         }
         metadata_index['document_count'] = len(self.documents)
 
@@ -85,3 +85,4 @@ class Metadata_index:
 
 if __name__ == "__main__":
     meta_index = Metadata_index(path='index/')
+    meta_index.store_metadata_index(path='index/')

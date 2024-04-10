@@ -1,5 +1,5 @@
-from .indexes_enum import Indexes, Index_types
-from .index_reader import Index_reader
+from indexes_enum import Indexes, Index_types
+from index_reader import Index_reader
 import json
 from collections import defaultdict
 
@@ -22,7 +22,7 @@ class Tiered_index:
         }
         # feel free to change the thresholds
         self.tiered_index = {
-            Indexes.STARS: self.convert_to_tiered_index(3, 2, Indexes.STARS),
+            Indexes.STARS: self.convert_to_tiered_index(2, 1, Indexes.STARS),
             Indexes.SUMMARIES: self.convert_to_tiered_index(10, 5, Indexes.SUMMARIES),
             Indexes.GENRES: self.convert_to_tiered_index(1, 0, Indexes.GENRES)
         }
@@ -92,3 +92,6 @@ if __name__ == "__main__":
     tiered = Tiered_index(
         path="index/"
     )
+    tiered.store_tiered_index(path="index/", index_name=Indexes.STARS)
+    tiered.store_tiered_index(path="index/", index_name=Indexes.GENRES)
+    tiered.store_tiered_index(path="index/", index_name=Indexes.SUMMARIES)
