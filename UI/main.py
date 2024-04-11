@@ -7,6 +7,7 @@ import time
 from enum import Enum
 import random
 from Logic.core.snippet import Snippet
+from Logic.core.preprocess import Preprocessor
 
 snippet_obj = Snippet(
     number_of_words_on_each_side=5
@@ -51,7 +52,13 @@ def search_handling(
     search_method,
 ):
     if search_button:
-        corrected_query = utils.correct_text(search_term, utils.movies_dataset)
+        spell_correction_dataset = [summary for movie in utils.movies_dataset for summary in movie["summaries"]]
+        # TODO: better to uncomment below line if provided with fully english dataset
+        
+        # spell_correction_dataset.extend(movie["title"] for movie in utils.movies_dataset if movie["title"] != None)
+        # spell_correction_dataset = [star for movie in utils.movies_dataset for star in movie["stars"]]
+        spell_correction_dataset = Preprocessor(spell_correction_dataset).preprocess()
+        corrected_query = utils.correct_text(search_term, spell_correction_dataset)
 
         if corrected_query != search_term:
             st.warning(f"Your search terms were corrected to: {corrected_query}")

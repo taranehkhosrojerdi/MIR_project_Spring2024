@@ -5,6 +5,8 @@ from enum import Enum
 import copy
 from collections import defaultdict
 
+from preprocess import Preprocessor
+
 class Indexes(Enum):
     DOCUMENTS = 'documents'
     STARS = 'stars'
@@ -276,10 +278,18 @@ class Index:
         #         TODO
         if not os.path.exists(path):
             raise FileNotFoundError(f"No index found at path: {path}")
-
+        type = ""
+        if path.count('stars') > 0: 
+            type = 'stars'
+        elif path.count('genres') > 0:
+            type = 'genres'
+        elif path.count('summaries') > 0:
+            type = 'summaries'
+        elif path.count('documents') > 0:
+            type = 'documents'
         with open(path, 'r') as f:
             loaded_index = json.load(f)
-        self.index = loaded_index
+        self.index[type] = loaded_index
         return loaded_index
 
     def check_if_index_loaded_correctly(self, index_type: str, loaded_index: dict):
@@ -354,7 +364,7 @@ class Index:
         
         # print(posting_list)
         # print(docs)
-
+        
         if set(docs).issubset(set(posting_list)):
             print('Indexing is correct')
 
@@ -372,17 +382,30 @@ class Index:
 if __name__ == "__main__":
     with open('../../tests/IMDB_crawled.json') as f:
         movies = json.load(f)
+    preprocessed_movies = []
+    for movie in movies:
+        if movie["title"] is not None:
+            temp_movie = {}
+            for field in movie.keys():
+                if field in ["stars", "summaries", "genres"]:
+                    temp_movie[field] =  Preprocessor(movie[field]).preprocess()
+                elif field == "title":
+                    temp_movie[field] = Preprocessor([movie[field]]).preprocess()[0]
+                else:
+                    temp_movie[field] =  movie[field]
+            preprocessed_movies.append(temp_movie)
+        # preprocessor = Preprocessor(movie)
+        # preprocessed_movies[movie["id"]] = preprocessor.preprocess()
          
-    indexer = Index(movies[:1000])
-    
-    
-    # print(indexer.index[Indexes.SUMMARIES.value]['good'])
-    # indexer.check_add_remove_is_correct()   
+    indexer = Index(preprocessed_movies)
+    print(indexer.index[Indexes.SUMMARIES.value]['good'])
+    indexer.check_add_remove_is_correct()   
     indexer.check_if_indexing_is_good(Indexes.STARS.value, 'Brad')
     
     indexer.store_index('./index', Indexes.STARS.value)
     indexer.store_index('./index', Indexes.GENRES.value)
+    indexer.store_index('./index', Indexes.SUMMARIES.value)
     indexer.store_index('./index', Indexes.DOCUMENTS.value)
-    # # loaded_index = indexer.load_index('./indexer/test_index.json')
-    # # # print(indexer.check_if_index_loaded_correctly(index_type=Indexes.STARS.value, loaded_index=loaded_index))
+    # loaded_index = indexer.load_index('Logic/core/indexer/index/stars_index.json')
+    # print(indexer.check_if_index_loaded_correctly(index_type=Indexes.STARS.value, loaded_index=loaded_index))
     # # # indexer.check_if_indexing_is_good(Indexes.DOCUMENTS.value)

@@ -1,9 +1,11 @@
 import numpy as np
 from collections import defaultdict, OrderedDict
 import json
+import math
+from .indexer.indexes_enum import Indexes
+from .indexer.index_reader import Index_reader
 
-from indexer.indexes_enum import Indexes
-from indexer.index_reader import Index_reader
+
 
 class Scorer:    
     def __init__(self, index, number_of_documents):
@@ -132,14 +134,21 @@ class Scorer:
             term_document_count_matrix = term_document_count_matrix * np.array(list(term_idfs.values()))[:, None]
      
         if method[2] == 'c':
-            term_document_count_matrix = (term_document_count_matrix - np.mean(term_document_count_matrix, axis=1)[:, None]) / np.std(term_document_count_matrix, axis=1)[:, None]
+            doc_norm = 0
+            for i in range(term_document_count_matrix.shape[0]):
+                for j in range(term_document_count_matrix.shape[1]):
+                    doc_norm += (term_document_count_matrix[i, j] * term_document_count_matrix[i, j])
+            doc_norm = 1 / math.sqrt(doc_norm)
+            for i in range(term_document_count_matrix.shape[0]):
+                for j in range(term_document_count_matrix.shape[1]):
+                    term_document_count_matrix[i, j] *= doc_norm           
     
         query_matrix = np.zeros(len(self.index))
         query_tfs = self.get_query_tfs(query)
         for i, term in enumerate(self.index.keys()):
             if term in query_tfs:
                 query_matrix[i] = query_tfs[term]
-            
+
         if method[4] == 'l':
             query_matrix = np.where(query_matrix > 0, 1 + np.log(query_matrix + 1e-10), 0)
                 
@@ -147,11 +156,19 @@ class Scorer:
             query_matrix = query_matrix * np.array(list(term_idfs.values()))
                 
         if method[6] == 'c':
-            query_matrix = (query_matrix - np.mean(query_matrix)) / np.std(query_matrix)
-        
+            query_norm = 0
+            for i in range(query_matrix.shape[0]):
+                query_norm += (query_matrix[i] * query_matrix[i])
+            query_norm = 1 / math.sqrt(query_norm) if query_norm != 0 else 0
+            if query_norm > 0:
+                for ele in query_matrix:
+                    ele *= query_norm
+       
         score_vector = np.dot(query_matrix, term_document_count_matrix)
-        results = OrderedDict(zip(all_doc_ids, score_vector))
-        results = OrderedDict(sorted(results.items(), key=lambda item: item[1], reverse=True))
+        results = {doc_id: score for doc_id, score in zip(all_doc_ids, score_vector)}
+        results = dict(sorted(results.items(), key=lambda item: item[1], reverse=True))
+#       results = OrderedDict(zip(all_doc_ids, score_vector))
+#       results = OrderedDict(sorted(results.items(), key=lambda item: item[1], reverse=True))
 
         return results
                 
@@ -212,10 +229,11 @@ class Scorer:
         scores = defaultdict(int)
         for i, doc in enumerate(all_doc_ids):
             for term in query:
-                idf = self.get_idf(term)
-                tf = self.index[term][doc] if doc in list(self.index[term].keys()) else 0
-                normalization_factor = (1 - b) + (b * (document_lengths[doc] / average_document_field_length))
-                scores[doc] += (idf * (k + 1) * tf) / ((k * normalization_factor) + tf)
+                if term in self.index.keys():
+                    idf = self.get_idf(term)
+                    tf = self.index[term][doc] if doc in list(self.index[term].keys()) else 0
+                    normalization_factor = (1 - b) + (b * (document_lengths[doc] / average_document_field_length))
+                    scores[doc] += (idf * (k + 1) * tf) / ((k * normalization_factor) + tf)
         
         scores = {key: value for key, value in sorted(scores.items(), key=lambda item: item[1], reverse=True)}
         return scores
@@ -248,7 +266,7 @@ class Scorer:
     
 # ------------------------------------------------Test-----------------------------------------------
 
-# index = Index_reader(path='./indexer/index/', index_name=Indexes.SUMMARIES).index
+# index = Index_reader(path='Logic/core/indexer/index/', index_name=Indexes.SUMMARIES).index
 # all_doc_ids = []
 # for term in index.keys():
 #     all_doc_ids.extend(index[term].keys())
@@ -263,7 +281,7 @@ class Scorer:
 # scorer = Scorer(index, len(all_doc_ids))
 
 # query = ['Joker', 'Batman']
-# result = scorer.compute_socres_with_okapi_bm25(query=query, average_document_field_length=avdl, document_lengths=doc_lengths)
+# result = scorer.compute_scores_with_vector_space_model(query=query, method = 'lnc.ltc')
 
 # for key, value in {k: result[k] for k in list(result)[:5]}.items():
 #     print(key, value)

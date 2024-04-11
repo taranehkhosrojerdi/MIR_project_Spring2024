@@ -207,7 +207,7 @@ class MinHashLSH:
 
 
 # -------------------------------------------Test with dump data------------------------------------
-with open('./LSHFakeData.json') as f:
+with open('./Logic/core/LSHFakeData.json') as f:
     data = json.load(f)
 documents = [item['summaries'][0] for item in data]
 lsh = MinHashLSH(documents, num_hashes=10)

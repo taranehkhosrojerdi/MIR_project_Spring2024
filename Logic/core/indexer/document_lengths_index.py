@@ -4,7 +4,7 @@ from index_reader import Index_reader
 from collections import defaultdict
 
 class DocumentLengthsIndex:
-    def __init__(self,path='index/'):
+    def __init__(self,path='./index/'):
         """
         Initializes the DocumentLengthsIndex class.
 
@@ -70,3 +70,6 @@ class DocumentLengthsIndex:
 if __name__ == '__main__':
     document_lengths_index = DocumentLengthsIndex()
     print('Document lengths index stored successfully.')
+    document_lengths_index.store_document_lengths_index(path='./index/', index_name=Indexes.STARS)
+    document_lengths_index.store_document_lengths_index(path='./index/', index_name=Indexes.SUMMARIES)
+    document_lengths_index.store_document_lengths_index(path='./index/', index_name=Indexes.GENRES)

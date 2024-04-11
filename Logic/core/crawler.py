@@ -298,11 +298,11 @@ class IMDbCrawler:
 
         """
         try:
-            section = soup.find('section', {'class': 'ipc-page-section ipc-page-section--baseAlt ipc-page-section--tp-none ipc-page-section--bp-xs sc-491663c0-2 eGWcuq'})
-            title_h1 = section.find('h1', {'data-testid': 'hero__pageTitle'})
-            title_div = title_h1.find('span', {'data-testid': 'hero__primary-text'})
-            if title_div:
-                return title_div.text.strip()
+            # section = soup.find('section', {'class': 'ipc-page-section ipc-page-section--baseAlt ipc-page-section--tp-none ipc-page-section--bp-xs sc-491663c0-2 eGWcuq'})
+            title_h1 = soup.find('h1', {'data-testid': 'hero__pageTitle'})
+            # title_div = title_h1.find('span', {'data-testid': 'hero__primary-text'})
+            if title_h1:
+                return title_h1.text.strip()
             else:
                 return "Title not found"
         except Exception as e:
@@ -322,12 +322,15 @@ class IMDbCrawler:
             The first page summary of the movie
         """
         try:
-            section = soup.find('section', {'class': 'ipc-page-section ipc-page-section--baseAlt ipc-page-section--tp-none ipc-page-section--bp-xs sc-491663c0-2 eGWcuq'})
-            inner_section = section.find('section', {'class': 'sc-67fa2588-4 gflGWU'})
-            summary_tag = inner_section.find('p', {'data-testid': 'plot'})
-            summary = summary_tag.find('span', {'data-testid': 'plot-xs_to_m'})
+            script = soup.find("script", type="application/ld+json")
+            script_string = json.loads(script.string)
+            summary = script_string.get("description")
+            # section = soup.find('section', {'class': 'ipc-page-section ipc-page-section--baseAlt ipc-page-section--tp-none ipc-page-section--bp-xs sc-491663c0-2 eGWcuq'})
+            # inner_section = section.find('section', {'class': 'sc-67fa2588-4 gflGWU'})
+            # summary_tag = inner_section.find('p', {'data-testid': 'plot'})
+            # summary = summary_tag.find('span', {'data-testid': 'plot-xs_to_m'})
             if summary:
-                return summary.text.strip()
+                return summary
             else:
                 return "Summary not found"
         except Exception as e:

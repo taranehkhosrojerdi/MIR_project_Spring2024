@@ -22,7 +22,7 @@ class Preprocessor:
         # TODO
         self.documents = documents
         self.stopwords = []
-        with open('stopwords.txt', 'r') as file:
+        with open('../Logic/core/stopwords.txt', 'r') as file:
             self.stopwords = [line.strip() for line in file]
 
     def preprocess(self):
@@ -41,6 +41,7 @@ class Preprocessor:
             doc = self.remove_punctuations(doc)
             doc = self.normalize(doc)
             doc = self.remove_stopwords(doc)
+            doc = doc.lower()
             preprocessed_documents.append(doc)
         return preprocessed_documents
     
@@ -160,7 +161,7 @@ class Preprocessor:
         text = ' '.join(words)
         return text
 # ---------------------------------------------Test-------------------------------------------
-# with open('./LSHFakeData.json') as f:
+# with open('./Logic/core/LSHFakeData.json') as f:
 #     data = json.load(f)
 # documents = ["Salam., salam, agarga aregta https://google.com/search"]
 # preprocessor = Preprocessor(documents)

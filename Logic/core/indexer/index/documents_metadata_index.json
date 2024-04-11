@@ -1,8 +1,8 @@
 {
     "averge_document_length": {
-        "stars": 6.902255639097745,
+        "stars": 6.192,
         "genres": 2.544,
-        "summaries": 417.15413533834584
+        "summaries": 436.848
     },
-    "document_count": 266
+    "document_count": 250
 }

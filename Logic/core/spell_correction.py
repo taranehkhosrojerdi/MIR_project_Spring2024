@@ -1,5 +1,6 @@
 from collections import defaultdict
 import json
+from Logic.core.preprocess import Preprocessor
 
 class SpellCorrection:
     def __init__(self, all_documents):
@@ -150,7 +151,6 @@ class SpellCorrection:
                 tf_score = self.word_counter[candidate_word] / max_tf_score
                 combined_score = jaccard_score * tf_score
                 combined_scores.append((candidate_word, combined_score))
-
             corrected_query = max(combined_scores, key=lambda x: x[1])[0]
 
         return corrected_query
@@ -158,8 +158,12 @@ class SpellCorrection:
 # --------------------------------------------Test----------------------------------------------
 # with open('../tests/IMDB_crawled.json') as f:
 #     data = json.load(f)
+# spell_correction_dataset = [summary for movie in data for summary in movie["summaries"]]
+# # spell_correction_dataset.extend(movie["title"] for movie in data if movie["title"] != None)
+# # spell_correction_dataset = [star_name for movie in data for star in movie["stars"] for star_name in star.split() if movie["stars"] != None]
+# spell_correction_dataset = Preprocessor(spell_correction_dataset).preprocess()
+
 # sample_docs = [item['summaries'][0] for item in data]
-# spell_checker = SpellCorrection(sample_docs)
-# print(spell_checker.shingle_word("sample"))
-# print(spell_checker.find_nearest_words("asept"))
-# print(spell_checker.spell_check("asept"))
+# spell_checker = SpellCorrection(spell_correction_dataset)
+# print(spell_checker.find_nearest_words("batman"))
+# print(spell_checker.spell_check("batman"))

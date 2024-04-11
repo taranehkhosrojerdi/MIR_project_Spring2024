@@ -204,6 +204,17 @@ class Evaluation:
         NDCG = 0.0
 
         # TODO: Calculate NDCG here
+        ideal_DCG = 0.0
+        for i in range(len(actual)):
+            DCG_i = 0.0
+            for j in range(len(actual[i])):
+                relevance = 0
+                if actual[i][j] in actual[i]:
+                    relevance = 1
+                DCG_i += (2 ** relevance - 1) / math.log2(j + 2)
+            ideal_DCG += DCG_i
+        DCG = self.cacluate_DCG(actual=actual, predicted=predicted)
+        NDCG = DCG / ideal_DCG if ideal_DCG!= 0 else 0.0
 
         return NDCG
     
@@ -253,7 +264,12 @@ class Evaluation:
         MRR = 0.0
 
         # TODO: Calculate MRR here
-
+        for i in range(len(actual)):
+            for j in range(len(predicted[i])):
+                if predicted[i][j] in actual[i]:
+                    MRR += 1 / (j + 1)
+                    break
+        MRR /= len(actual)
         return MRR
     
 
@@ -367,6 +383,4 @@ class Evaluation:
         self.print_evaluation(precision, recall, f1, ap, map_score, dcg, ndcg, rr, mrr)
         self.log_evaluation(precision, recall, f1, ap, map_score, dcg, ndcg, rr, mrr)
 
-
-# -------------------------------------------Test--------------------------------------------
 
