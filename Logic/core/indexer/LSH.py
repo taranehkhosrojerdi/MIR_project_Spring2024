@@ -1,10 +1,11 @@
 import numpy as np
 import itertools
 import random
-
+from collections import defaultdict
+import json # for testing
 
 class MinHashLSH:
-    def __init__(self, documents, num_hashes):
+    def __init__(self, documents: list, num_hashes: int):
         """
         Initialize the MinHashLSH
 
@@ -34,8 +35,11 @@ class MinHashLSH:
         set
             A set of shingles.
         """
-        shingles = None
-        return shingles
+        # TODO
+        shingles = []
+        for i in range(len(document) - k + 1):
+            shingles.append(document[i:i+k])
+        return set(shingles)
 
     def build_characteristic_matrix(self):
         """
@@ -44,10 +48,20 @@ class MinHashLSH:
         Returns
         ----------
         numpy.ndarray
-            The binary characteristic matrix.
+            The binary characteristic matrix
         """
         # TODO
-        return
+        all_shingles = self.shingle_document(self.documents[0])
+        for i, doc in enumerate(self.documents[1:]):
+            all_shingles = all_shingles.union(self.shingle_document(doc))
+
+        self.all_shingles = all_shingles
+
+        characteristic_matrix = np.zeros((len(self.documents), len(all_shingles)), dtype=int)
+        for i, doc in enumerate(self.documents):
+            characteristic_matrix[i, :] = [1 if shingle in doc else 0 for shingle in all_shingles]
+        
+        return characteristic_matrix
 
     def min_hash_signature(self):
         """
@@ -59,7 +73,21 @@ class MinHashLSH:
             The Min-Hash signatures matrix.
         """
         # TODO
-        return
+        char_matrix = self.build_characteristic_matrix()
+        num_docs = len(char_matrix)
+        num_shingles = len(char_matrix[0])
+        minhash_signature_matrix = np.full((self.num_hashes, num_docs), np.inf)
+        hash_base = list(range(1, num_shingles + 1))
+        random.shuffle(hash_base)
+        hash_functions = [np.random.permutation(num_shingles) for _ in range(self.num_hashes)]
+
+        for di in range(num_docs):
+            for hi, hash in enumerate(hash_functions):
+                one_indices = np.where(char_matrix[di, hash] == 1)[0]
+                if len(one_indices) > 0:
+                    minhash_signature_matrix[hi, di] = min(one_indices)
+
+        return minhash_signature_matrix
 
     def lsh_buckets(self, signature, bands=10, rows_per_band=10):
         """
@@ -80,7 +108,18 @@ class MinHashLSH:
             A dictionary mapping bucket IDs to lists of document indices.
         """
         # TODO
-        return
+        num_docs = signature.shape[1]
+        bucket_dict = defaultdict(list)
+        band_size = rows_per_band * bands
+
+        for i in range(0, self.num_hashes, rows_per_band):
+            for j in range(num_docs):
+                band_signature = tuple(signature[i:i+rows_per_band, j])
+                band_hash = hash(band_signature)
+                bucket_id = band_hash % band_size
+                bucket_dict[bucket_id].append(j)
+
+        return bucket_dict
 
     def perform_lsh(self):
         """
@@ -92,9 +131,11 @@ class MinHashLSH:
             A dictionary mapping bucket IDs to lists of document indices.
         """
         # TODO
-        return
+        minhash_signature = self.min_hash_signature()
+        buckets = self.lsh_buckets(minhash_signature)
+        return buckets
 
-    def jaccard_score(self, first_set, second_set):
+    def jaccard_score(self, first_set: set, second_set: set):
         """
         Calculate jaccard score for two sets.
 
@@ -111,7 +152,10 @@ class MinHashLSH:
             Jaccard score.
         """
         # TODO
-        pass
+        intersection = len(first_set.intersection(second_set))
+        union = len(first_set.union(second_set))
+        jaccard = intersection / union if union > 0 else 0
+        return jaccard
 
     def jaccard_similarity_test(self, buckets, all_documents):
         """
@@ -160,3 +204,12 @@ class MinHashLSH:
 
         # a good score is around 0.8
         print("your final score in near duplicate detection:", correct_near_duplicates / all_near_duplicates)
+
+
+# -------------------------------------------Test with dump data------------------------------------
+with open('./Logic/core/LSHFakeData.json') as f:
+    data = json.load(f)
+documents = [item['summaries'][0] for item in data]
+lsh = MinHashLSH(documents, num_hashes=10)
+buckets = lsh.perform_lsh()
+lsh.jaccard_similarity_test(buckets, documents)
