@@ -1,6 +1,6 @@
 from collections import defaultdict
 import json
-from Logic.core.preprocess import Preprocessor
+from .preprocess import Preprocessor
 
 class SpellCorrection:
     def __init__(self, all_documents):

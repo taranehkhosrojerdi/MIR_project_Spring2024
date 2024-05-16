@@ -2,8 +2,8 @@ import numpy as np
 from collections import defaultdict, OrderedDict
 import json
 import math
-from .indexer.indexes_enum import Indexes
-from .indexer.index_reader import Index_reader
+# from Logic.core.indexer.indexes_enum import Indexes
+# from Logic.core.indexer.index_reader import Index_reader
 
 
 class Scorer:    
@@ -290,8 +290,8 @@ class Scorer:
             A dictionary of the document IDs and their scores.
         """
 
-        # TODO
-        pass
+        # TODO: ask about index?
+        
 
     def compute_score_with_unigram_model(
         self, query, document_id, smoothing_method, document_lengths, alpha, lamda
@@ -323,16 +323,56 @@ class Scorer:
         """
 
         # TODO
-        pass
+        doc_model = []
+        doc_count = 0
+        corpus_all = 0
+        corpus_count = 0
 
+        for term in self.index.keys():
+            for d_id in self.index[term]:
+                corpus_all += self.index[term][d_id]
+            if document_id in self.index[term].keys():
+                for i in range(int(self.index[term][document_id])):
+                    doc_model.append(term)
+        
+        for term in query:
+            doc_count += doc_model.count(term)
+            for d_id in self.index[term]:
+                corpus_count += self.index[term][d_id]
+        
+        result = 0
+        if smoothing_method == 'bayes':
+            result = (doc_count + alpha * (corpus_count / corpus_all)) / (len(doc_model) + alpha)
+        elif smoothing_method == 'naive':
+            result = doc_count / len(doc_model)
+        elif smoothing_method == 'mixture':
+            result = lamda * (doc_count / len(doc_model)) + (1 - lamda) * (corpus_count / corpus_all) 
+            
+        return result    
 
 # ------------------------------------------------Test-----------------------------------------------
 
-# index = Index_reader(path='Logic/core/indexer/index/', index_name=Indexes.SUMMARIES).index
-# all_doc_ids = []
-# for term in index.keys():
-#     all_doc_ids.extend(index[term].keys())
-# all_doc_ids = list(set(all_doc_ids))
+index = {"score":
+    {
+        "tt0372784": 2,
+        "tt0372783": 1
+    },
+    "batman":
+    {
+        "tt0372784": 1,
+        "tt0372783": 1
+    },
+    "joker":
+    {
+        "tt0372784": 2,
+        "tt0372783": 2
+    },
+}
+
+all_doc_ids = []
+for term in index.keys():
+    all_doc_ids.extend(index[term].keys())
+all_doc_ids = list(set(all_doc_ids))
 # doc_lengths = defaultdict(int)
 # for doc_id in all_doc_ids:
 #     for term in index.keys():
@@ -340,9 +380,11 @@ class Scorer:
 #             doc_lengths[doc_id] += index[term][doc_id]
 # avdl = sum(doc_lengths.values()) / len(doc_lengths)
 
-# scorer = Scorer(index, len(all_doc_ids))
+scorer = Scorer(index, len(all_doc_ids))
 
-# query = ['Joker', 'Batman']
+query = ['joker', 'batman']
+doc_id = "tt0372784"
+print(scorer.compute_score_with_unigram_model(query, doc_id, smoothing_method='mixture', document_lengths=9, alpha=5, lamda=0.8))
 # result = scorer.compute_scores_with_vector_space_model(query=query, method = 'lnc.ltc')
 
 # for key, value in {k: result[k] for k in list(result)[:5]}.items():
