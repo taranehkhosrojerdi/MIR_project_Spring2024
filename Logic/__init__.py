@@ -53,3 +53,8 @@ expected_fields = {
 
 json_file_path = "../Logic/tests/IMDB_crawled.json"
 check_field_types(json_file_path, expected_fields)
+# from .core import *
+# from .utils import *
+
+
+# __all__ = [k for k in globals().keys() if not k.startswith("_")]
