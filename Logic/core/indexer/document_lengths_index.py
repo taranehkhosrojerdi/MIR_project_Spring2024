@@ -1,10 +1,14 @@
 import json
-from indexes_enum import Indexes,Index_types
-from index_reader import Index_reader
+
+import sys
+sys.path.append(r"C:\Users\Asus\PycharmProjects\MIR_project_Spring2024")
+
+from Logic.core.indexer.indexes_enum import Indexes,Index_types
+from Logic.core.indexer.index_reader import Index_reader
 from collections import defaultdict
 
 class DocumentLengthsIndex:
-    def __init__(self,path='./index/'):
+    def __init__(self,path='Logic/core/indexer/index/'):
         """
         Initializes the DocumentLengthsIndex class.
 
@@ -70,6 +74,6 @@ class DocumentLengthsIndex:
 if __name__ == '__main__':
     document_lengths_index = DocumentLengthsIndex()
     print('Document lengths index stored successfully.')
-    document_lengths_index.store_document_lengths_index(path='./index/', index_name=Indexes.STARS)
-    document_lengths_index.store_document_lengths_index(path='./index/', index_name=Indexes.SUMMARIES)
-    document_lengths_index.store_document_lengths_index(path='./index/', index_name=Indexes.GENRES)
+    document_lengths_index.store_document_lengths_index(path='Logic/core/indexer/index/', index_name=Indexes.STARS)
+    document_lengths_index.store_document_lengths_index(path='Logic/core/indexer/index/', index_name=Indexes.SUMMARIES)
+    document_lengths_index.store_document_lengths_index(path='Logic/core/indexer/index/', index_name=Indexes.GENRES)

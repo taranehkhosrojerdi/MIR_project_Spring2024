@@ -1,5 +1,8 @@
-from index_reader import Index_reader
-from indexes_enum import Indexes, Index_types
+import sys
+sys.path.append(r"C:\Users\Asus\PycharmProjects\MIR_project_Spring2024")
+
+from Logic.core.indexer.index_reader import Index_reader
+from Logic.core.indexer.indexes_enum import Indexes, Index_types
 import json
 import numpy as np
 from collections import defaultdict
@@ -87,5 +90,5 @@ class Metadata_index:
 
 
 if __name__ == "__main__":
-    meta_index = Metadata_index(path='index/')
-    meta_index.store_metadata_index(path='index/')
+    meta_index = Metadata_index(path='Logic/core/indexer/index/')
+    meta_index.store_metadata_index(path='Logic/core/indexer/index/')

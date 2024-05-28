@@ -264,7 +264,7 @@ class Scorer:
         pass
     
     def compute_scores_with_unigram_model(
-        self, query, smoothing_method, document_lengths=None, alpha=0.5, lamda=0.5
+        self, query, smoothing_method, alpha=0.5, lamda=0.5
     ):
         """
         Calculates the scores for each document based on the unigram model.
@@ -289,13 +289,21 @@ class Scorer:
         float
             A dictionary of the document IDs and their scores.
         """
-
-        # TODO: ask about index?
+        all_doc_ids = []
+        for term in self.index.keys():
+            all_doc_ids.extend(self.index[term].keys())
+        all_doc_ids = list(set(all_doc_ids))
         
+        doc_score = defaultdict(float)
+        
+        for did in all_doc_ids:
+            doc_score[did] = self.compute_score_with_unigram_model(query, did, smoothing_method, alpha, lamda)
+            
+        scores = {key: value for key, value in sorted(doc_score.items(), key=lambda item: item[1], reverse=True)}
+        return scores
+                    
 
-    def compute_score_with_unigram_model(
-        self, query, document_id, smoothing_method, document_lengths, alpha, lamda
-    ):
+    def compute_score_with_unigram_model(self, query, document_id, smoothing_method, alpha=0.5, lamda=0.5):
         """
         Calculates the scores for each document based on the unigram model.
 
@@ -307,9 +315,6 @@ class Scorer:
             The document to calculate the score for.
         smoothing_method : str (bayes | naive | mixture)
             The method used for smoothing the probabilities in the unigram model.
-        document_lengths : dict
-            A dictionary of the document lengths. The keys are the document IDs, and the values are
-            the document's length in that field.
         alpha : float, optional
             The parameter used in bayesian smoothing method. Defaults to 0.5.
         lamda : float, optional
@@ -321,58 +326,62 @@ class Scorer:
         float
             The Unigram score of the document for the query.
         """
+        doc_term_count = {}
+        corpus_term_count = {}
+        doc_length = 0
+        corpus_length = 0
 
-        # TODO
-        doc_model = []
-        doc_count = 0
-        corpus_all = 0
-        corpus_count = 0
+        # query_terms = query.split()
 
         for term in self.index.keys():
-            for d_id in self.index[term]:
-                corpus_all += self.index[term][d_id]
-            if document_id in self.index[term].keys():
-                for i in range(int(self.index[term][document_id])):
-                    doc_model.append(term)
+            term_total_count = sum(self.index[term].values())
+            corpus_term_count[term] = term_total_count
+            corpus_length += term_total_count
         
+            if document_id in self.index[term]:
+                doc_term_count[term] = self.index[term][document_id]
+                doc_length += self.index[term][document_id]
+            else:
+                doc_term_count[term] = 0
+
+        result = 0.0
         for term in query:
-            doc_count += doc_model.count(term)
-            for d_id in self.index[term]:
-                corpus_count += self.index[term][d_id]
-        
-        result = 0
-        if smoothing_method == 'bayes':
-            result = (doc_count + alpha * (corpus_count / corpus_all)) / (len(doc_model) + alpha)
-        elif smoothing_method == 'naive':
-            result = doc_count / len(doc_model)
-        elif smoothing_method == 'mixture':
-            result = lamda * (doc_count / len(doc_model)) + (1 - lamda) * (corpus_count / corpus_all) 
-            
+            doc_count = doc_term_count.get(term, 0)
+            corpus_count = corpus_term_count.get(term, 0)
+
+            if smoothing_method == 'bayes':
+                term_score = (doc_count + (alpha * (corpus_count / corpus_length))) / (doc_length + alpha)
+            elif smoothing_method == 'naive':
+                term_score = doc_count / doc_length if doc_length > 0 else 0
+            elif smoothing_method == 'mixture':
+                term_score = (lamda * (doc_count / doc_length)) + ((1 - lamda) * (corpus_count / corpus_length)) if doc_length > 0 else (corpus_count / corpus_length)
+            result += term_score
+
         return result    
 
 # ------------------------------------------------Test-----------------------------------------------
 
-index = {"score":
-    {
-        "tt0372784": 2,
-        "tt0372783": 1
-    },
-    "batman":
-    {
-        "tt0372784": 1,
-        "tt0372783": 1
-    },
-    "joker":
-    {
-        "tt0372784": 2,
-        "tt0372783": 2
-    },
-}
+# index = {"score":
+#     {
+#         "tt0372784": 2,
+#         "tt0372783": 1
+#     },
+#     "batman":
+#     {
+#         "tt0372784": 1,
+#         "tt0372783": 1
+#     },
+#     "joker":
+#     {
+#         "tt0372784": 2,
+#         "tt0372783": 2
+#     },
+# }
 
-all_doc_ids = []
-for term in index.keys():
-    all_doc_ids.extend(index[term].keys())
-all_doc_ids = list(set(all_doc_ids))
+# all_doc_ids = []
+# for term in index.keys():
+#     all_doc_ids.extend(index[term].keys())
+# all_doc_ids = list(set(all_doc_ids))
 # doc_lengths = defaultdict(int)
 # for doc_id in all_doc_ids:
 #     for term in index.keys():
@@ -380,11 +389,11 @@ all_doc_ids = list(set(all_doc_ids))
 #             doc_lengths[doc_id] += index[term][doc_id]
 # avdl = sum(doc_lengths.values()) / len(doc_lengths)
 
-scorer = Scorer(index, len(all_doc_ids))
+# scorer = Scorer(index, len(all_doc_ids))
 
-query = ['joker', 'batman']
-doc_id = "tt0372784"
-print(scorer.compute_score_with_unigram_model(query, doc_id, smoothing_method='mixture', document_lengths=9, alpha=5, lamda=0.8))
+# query = ['joker', 'batman']
+# doc_id = "tt0372784"
+# print(scorer.compute_score_with_unigram_model(query, doc_id, smoothing_method='mixture', document_lengths=9, alpha=5, lamda=0.8))
 # result = scorer.compute_scores_with_vector_space_model(query=query, method = 'lnc.ltc')
 
 # for key, value in {k: result[k] for k in list(result)[:5]}.items():

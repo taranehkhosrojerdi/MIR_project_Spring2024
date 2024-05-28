@@ -31,7 +31,7 @@ class Snippet:
 
         # TODO: remove stop words from the query.
         stop_words = []
-        with open("../Logic/core/stopwords.txt", "r") as f:
+        with open("Logic/core/stopwords.txt", "r") as f:
             stop_words = [line.strip() for line in f]
         query = [word for word in query if word not in stop_words]
         query = "".join(query)

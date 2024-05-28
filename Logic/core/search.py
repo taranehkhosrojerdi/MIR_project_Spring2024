@@ -1,8 +1,12 @@
 import json
 import numpy as np
 from collections import defaultdict
-from Logic.core.preprocess import Preprocessor
-from Logic.core.scorer import Scorer
+
+import sys
+sys.path.append(r"C:\Users\Asus\PycharmProjects\MIR_project_Spring2024")
+
+from Logic.core.utility.preprocess import Preprocessor
+from Logic.core.utility.scorer import Scorer
 from Logic.core.indexer.indexes_enum import Indexes, Index_types
 from Logic.core.indexer.index_reader import Index_reader
 
@@ -13,7 +17,7 @@ class SearchEngine:
         Initializes the search engine.
 
         """
-        path = "path = '../Logic/core/indexer/index/"
+        path = "Logic/core/indexer/index/"
         self.document_indexes = {
             Indexes.STARS: Index_reader(path, Indexes.STARS),
             Indexes.GENRES: Index_reader(path, Indexes.GENRES),
@@ -211,6 +215,37 @@ class SearchEngine:
                 scores[field] = sc.compute_scores_with_vector_space_model(query=query, method=method)
         return scores
 
+    def find_scores_with_unigram_model(
+        self, query, smoothing_method, weights, scores, alpha=0.5, lamda=0.5
+    ):
+        """
+        Calculates the scores for each document based on the unigram model.
+
+        Parameters
+        ----------
+        query : str
+            The query to search for.
+        smoothing_method : str (bayes | naive | mixture)
+            The method used for smoothing the probabilities in the unigram model.
+        weights : dict
+            A dictionary mapping each field (e.g., 'stars', 'genres', 'summaries') to its weight in the final score. Fields with a weight of 0 are ignored.
+        scores : dict
+            The scores of the documents.
+        alpha : float, optional
+            The parameter used in bayesian smoothing method. Defaults to 0.5.
+        lamda : float, optional
+            The parameter used in some smoothing methods to balance between the document
+            probability and the collection probability. Defaults to 0.5.
+        """
+        for field in [Indexes.STARS, Indexes.SUMMARIES, Indexes.GENRES]:
+            unigram_index = self.document_indexes[field].index
+            all_doc_ids = []
+            for term in unigram_index.keys():
+                all_doc_ids.extend(unigram_index[term].keys())
+            all_doc_ids = list(set(all_doc_ids))
+
+            sc = Scorer(index=unigram_index, number_of_documents=len(all_doc_ids))
+            scores[field.value] = sc.compute_scores_with_unigram_model(query=query, smoothing_method=smoothing_method, alpha=alpha, lamda=lamda)
 
     def merge_scores(self, scores1, scores2):
         """

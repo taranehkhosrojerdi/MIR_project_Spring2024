@@ -1,12 +1,16 @@
 from typing import Dict, List
-from .core.search import SearchEngine
-from .core.spell_correction import SpellCorrection
-from .core.preprocess import Preprocessor
-from .core.snippet import Snippet
-from .core.indexer.indexes_enum import Indexes, Index_types
+
+import sys
+sys.path.append(r"C:\Users\Asus\PycharmProjects\MIR_project_Spring2024")
+
+from Logic.core.search import SearchEngine
+from Logic.core.utility.spell_correction import SpellCorrection
+from Logic.core.utility.preprocess import Preprocessor
+from Logic.core.utility.snippet import Snippet
+from Logic.core.indexer.indexes_enum import Indexes, Index_types
 import json
 
-movies_dataset = json.load(open("../Logic/tests/IMDB_crawled.json", "r"))  # TODO
+movies_dataset = json.load(open("Logic/tests/IMDB_crawled.json", "r"))
 search_engine = SearchEngine()
 
 
@@ -43,6 +47,9 @@ def search(
     weights: list = [0.3, 0.3, 0.4],
     should_print=False,
     preferred_genre: str = None,
+    unigram_smoothing: str = 'naive',
+    alpha = None,
+    lamda = None
 ):
     """
     Finds relevant documents to query
@@ -73,9 +80,11 @@ def search(
     Retrieved documents with snippet
     """
     dict_weights = {'stars': weights[0], 'genres': weights[1], 'summaries': weights[2]}  # TODO
-    return search_engine.search(
-        query, method, dict_weights, max_results=max_result_count, safe_ranking=True
+    output = search_engine.search(
+        query, method, dict_weights, max_results=max_result_count, safe_ranking=True, smoothing_method=unigram_smoothing, alpha=alpha, lamda=lamda
     )
+    print(len(output))
+    return output
     # weights = ...  # TODO
     # return search_engine.search(
     #     query, method, weights, max_results=max_result_count, safe_ranking=True
@@ -101,6 +110,8 @@ def get_movie_by_id(id: str, movies_dataset: List[Dict[str, str]]) -> Dict[str, 
         The movie with the given id
     """
     # TODO: self-added code
+    result = {}
+    print("looook:", id)
     for movie in movies_dataset:
         if movie["id"] == id:
             result = movie

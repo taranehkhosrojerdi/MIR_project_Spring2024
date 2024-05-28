@@ -1,13 +1,13 @@
 import streamlit as st
 import sys
 
-sys.path.append("../")
-from Logic import utils
+sys.path.append(r"C:\Users\Asus\PycharmProjects\MIR_project_Spring2024")
+from Logic.utils import *
 import time
 from enum import Enum
 import random
-from Logic.core.snippet import Snippet
-from Logic.core.preprocess import Preprocessor
+from Logic.core.utility.snippet import Snippet
+from Logic.core.utility.preprocess import Preprocessor
 
 snippet_obj = Snippet(
     number_of_words_on_each_side=5
@@ -77,7 +77,7 @@ def search_handling(
         st.markdown(f"**Top {num_filter_results} Movies:**")
         for i in range(len(top_movies)):
             card = st.columns([3, 1])
-            info = utils.get_movie_by_id(top_movies[i], utils.movies_dataset)
+            info = get_movie_by_id(top_movies[i], movies_dataset)
             with card[0].container():
                 st.title(info["title"])
                 st.markdown(f"[Link to movie]({info['URL']})")
@@ -114,13 +114,17 @@ def search_handling(
         return
 
     if search_button:
-        spell_correction_dataset = [summary for movie in utils.movies_dataset for summary in movie["summaries"]]
+        spell_correction_dataset = []
+        for movie in movies_dataset:
+            if movie.get('summaries', None) != None and movie['summaries'] is not None:
+                for summary in movie['summaries']:
+                    spell_correction_dataset.append(summary)
         # TODO: better to uncomment below line if provided with fully english dataset
         
         # spell_correction_dataset.extend(movie["title"] for movie in utils.movies_dataset if movie["title"] != None)
         # spell_correction_dataset = [star for movie in utils.movies_dataset for star in movie["stars"]]
         spell_correction_dataset = Preprocessor(spell_correction_dataset).preprocess()
-        corrected_query = utils.correct_text(search_term, spell_correction_dataset)
+        corrected_query = correct_text(search_term, spell_correction_dataset)
 
         # corrected_query = utils.correct_text(search_term, utils.all_documents)
 
@@ -131,7 +135,7 @@ def search_handling(
         with st.spinner("Searching..."):
             time.sleep(0.5)  # for showing the spinner! (can be removed)
             start_time = time.time()
-            result = utils.search(
+            result = search(
                 search_term,
                 search_max_num,
                 search_method,
@@ -152,7 +156,7 @@ def search_handling(
 
         for i in range(len(result)):
             card = st.columns([3, 1])
-            info = utils.get_movie_by_id(result[i][0], utils.movies_dataset)
+            info = get_movie_by_id(result[i][0], movies_dataset)
             with card[0].container():
                 st.title(info["title"])
                 st.markdown(f"[Link to movie]({info['URL']})")

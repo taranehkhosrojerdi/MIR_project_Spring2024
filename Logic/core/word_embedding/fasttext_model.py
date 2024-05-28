@@ -1,12 +1,17 @@
 import fasttext
 import re
+import numpy as np
 
 from tqdm import tqdm
+import nltk
+# nltk.download('stopwords')
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from scipy.spatial import distance
 
-from .fasttext_data_loader import FastTextDataLoader
+import sys
+sys.path.append(r"C:\Users\Asus\PycharmProjects\MIR_project_Spring2024")
+from Logic.core.word_embedding.fasttext_data_loader import FastTextDataLoader
 
 
 def preprocess_text(text, minimum_length=1, stopword_removal=True, stopwords_domain=[], lower_case=True,
@@ -31,7 +36,22 @@ def preprocess_text(text, minimum_length=1, stopword_removal=True, stopwords_dom
     punctuation_removal: bool
         whether to remove punctuations
     """
-    pass
+    if lower_case:
+        text = text.lower()
+    if punctuation_removal:
+        text = re.sub(r'[^\w\s]', '', text)
+    tokens = word_tokenize(text)
+    
+    if minimum_length > 0:
+        tokens = [token for token in tokens if len(token) >= minimum_length]
+    if stopword_removal:
+        stop_words = set(stopwords.words('english'))
+        if stopwords_domain:
+            stop_words.update(stopwords_domain)
+        tokens = [token for token in tokens if token not in stop_words]
+    
+    return tokens
+    
 
 class FastText:
     """
@@ -56,6 +76,7 @@ class FastText:
         """
         self.method = method
         self.model = None
+        self.path = None
 
 
     def train(self, texts):
@@ -67,9 +88,17 @@ class FastText:
         texts : list of str
             The texts to train the FastText model.
         """
-        pass
+        tmp_training_file_path = "Logic/tests/preprocessed_texts_ft.txt"
+        with open(tmp_training_file_path, 'w', encoding='utf-8') as f:
+            for text in texts:
+                for token in preprocess_text(text):
+                    f.write(token + " ")
+        
+        self.model = fasttext.load_model('FastText_model.bin')
+        # self.model = fasttext.train_unsupervised('Logic/tests/preprocessed_texts_ft.txt', model=self.method)
+        
 
-    def get_query_embedding(self, query):
+    def get_query_embedding(self, query, do_preprocess=False):
         """
         Generates an embedding for the given query.
 
@@ -87,7 +116,10 @@ class FastText:
         np.ndarray
             The embedding for the query.
         """
-        pass
+        if do_preprocess:
+            query = preprocess_text(query)
+        return np.asarray(self.model.get_sentence_vector(query))
+        
 
     def analogy(self, word1, word2, word3):
         """
@@ -101,23 +133,29 @@ class FastText:
         Returns:
             str: The word that completes the analogy.
         """
-        # Obtain word embeddings for the words in the analogy
-        # TODO
+        vec1 = self.model.get_word_vector(word1)
+        vec2 = self.model.get_word_vector(word2)
+        vec3 = self.model.get_word_vector(word3)
+        vec4 = vec2 - vec1 + vec3
 
-        # Perform vector arithmetic
-        # TODO
+        vocab = {word: self.model.get_word_vector(word) for word in self.model.get_words()}
 
-        # Create a dictionary mapping each word in the vocabulary to its corresponding vector
-        # TODO
+        del vocab[word1]
+        del vocab[word2]
+        del vocab[word3]
 
-        # Exclude the input words from the possible results
-        # TODO
+        min_distance = float('inf')
+        closest_word = None
+        for word, vec in vocab.items():
+            dist = distance.cosine(vec4, vec)
+            if dist < min_distance:
+                min_distance = dist
+                closest_word = word
 
-        # Find the word whose vector is closest to the result vector
-        # TODO
-        pass
+        return closest_word
 
-    def save_model(self, path='FastText_model.bin'):
+
+    def save_model(self, path='Logic/core/word_embedding/dumb_FastText_model.bin'):
         """
         Saves the FastText model to a file.
 
@@ -126,7 +164,9 @@ class FastText:
         path : str, optional
             The path to save the FastText model.
         """
-        pass
+        self.path = path
+        self.model.save_model(path)
+        
 
     def load_model(self, path="FastText_model.bin"):
         """
@@ -137,7 +177,8 @@ class FastText:
         path : str, optional
             The path to load the FastText model.
         """
-        pass
+        fasttext.load_model(self.path)
+
 
     def prepare(self, dataset, mode, save=False, path='FastText_model.bin'):
         """
@@ -153,30 +194,32 @@ class FastText:
         if mode == 'train':
             self.train(dataset)
         if mode == 'load':
-            self.load_model(path)
-        if save:
+            self.load_model(self.path)
+        if mode == 'save' and save:
             self.save_model(path)
+            
 
-if __name__ == "__main__":
-    ft_model = FastText(preprocessor=preprocess_text, method='skipgram')
+# if __name__ == "__main__":
+# ft_model = fasttext.load_model('FastText_model.bin')
+# ft_model = FastText(method='skipgram')
+    
+# ft_data_loader = FastTextDataLoader('Logic/tests/dumb_IMDB_Crawled.json')
 
-    path = './Phase_1/index/'
-    ft_data_loader = FastTextDataLoader()
+# out = ft_data_loader.create_train_data()
+# X, y = out[0], out[1]
+# X = X.astype(str).tolist()
+# ft_model.train(X)
+# ft_model.prepare(None, mode = "save", save=True)
 
-    X = ft_data_loader.create_train_data(path)
+# print(10 * "*" + "Similarity" + 10 * "*")
+# word = 'woman'
+# neighbors = ft_model.model.get_nearest_neighbors(word, k=5)
 
-    ft_model.train(X)
-    ft_model.prepare(None, mode = "save")
+# for neighbor in neighbors:
+#     print(f"Word: {neighbor[1]}, Similarity: {neighbor[0]}")
 
-    print(10 * "*" + "Similarity" + 10 * "*")
-    word = 'queen'
-    neighbors = ft_model.model.get_nearest_neighbors(word, k=5)
-
-    for neighbor in neighbors:
-        print(f"Word: {neighbor[1]}, Similarity: {neighbor[0]}")
-
-    print(10 * "*" + "Analogy" + 10 * "*")
-    word1 = "man"
-    word2 = "king"
-    word3 = "queen"
-    print(f"Similarity between {word1} and {word2} is like similarity between {word3} and {ft_model.analogy(word1, word2, word3)}")
+# print(10 * "*" + "Analogy" + 10 * "*")
+# word1 = "man"
+# word2 = "king"
+# word3 = "woman"
+# print(f"Similarity between {word1} and {word2} is like similarity between {word3} and {ft_model.analogy(word1, word2, word3)}")

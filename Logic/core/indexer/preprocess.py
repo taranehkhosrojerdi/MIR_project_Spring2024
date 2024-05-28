@@ -22,7 +22,7 @@ class Preprocessor:
         # TODO
         self.documents = documents
         self.stopwords = []
-        with open('../stopwords.txt', 'r') as file:
+        with open('Logic/core/stopwords.txt', 'r') as file:
             self.stopwords = [line.strip() for line in file]
 
     def preprocess(self):

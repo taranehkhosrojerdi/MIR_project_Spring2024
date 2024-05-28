@@ -1,5 +1,8 @@
-from indexes_enum import Indexes, Index_types
-from index_reader import Index_reader
+import sys
+sys.path.append(r"C:\Users\Asus\PycharmProjects\MIR_project_Spring2024")
+
+from Logic.core.indexer.indexes_enum import Indexes, Index_types
+from Logic.core.indexer.index_reader import Index_reader
 import json
 from collections import defaultdict
 
@@ -90,8 +93,8 @@ class Tiered_index:
 
 if __name__ == "__main__":
     tiered = Tiered_index(
-        path="index/"
+        path="Logic/core/indexer/index/"
     )
-    tiered.store_tiered_index(path="index/", index_name=Indexes.STARS)
-    tiered.store_tiered_index(path="index/", index_name=Indexes.GENRES)
-    tiered.store_tiered_index(path="index/", index_name=Indexes.SUMMARIES)
+    tiered.store_tiered_index(path="Logic/core/indexer/index/", index_name=Indexes.STARS)
+    tiered.store_tiered_index(path="Logic/core/indexer/index/", index_name=Indexes.GENRES)
+    tiered.store_tiered_index(path="Logic/core/indexer/index/", index_name=Indexes.SUMMARIES)

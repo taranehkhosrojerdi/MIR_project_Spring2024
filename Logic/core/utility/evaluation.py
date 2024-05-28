@@ -1,7 +1,7 @@
 
 from typing import List
 import math
-import wandb
+# import wandb
 
 class Evaluation:
 
@@ -341,19 +341,20 @@ class Evaluation:
         """
         
         #TODO: Log the evaluation metrics using Wandb
-        wandb.init(project="evaluation_metrics", name=self.name)
+        # wandb.init(project="evaluation_metrics", name=self.name)
     
-        wandb.log({
-            "Precision": precision,
-            "Recall": recall,
-            "F1 Score": f1,
-            "Average Precision": ap,
-            "Mean Average Precision": map,
-            "Discounted Cumulative Gain": dcg,
-            "Normalized Discounted Cumulative Gain": ndcg,
-            "Reciprocal Rank": rr,
-            "Mean Reciprocal Rank": mrr
-        })
+        # wandb.log({
+        #     "Precision": precision,
+        #     "Recall": recall,
+        #     "F1 Score": f1,
+        #     "Average Precision": ap,
+        #     "Mean Average Precision": map,
+        #     "Discounted Cumulative Gain": dcg,
+        #     "Normalized Discounted Cumulative Gain": ndcg,
+        #     "Reciprocal Rank": rr,
+        #     "Mean Reciprocal Rank": mrr
+        # })
+        pass
 
 
     def calculate_evaluation(self, actual: List[List[str]], predicted: List[List[str]]):

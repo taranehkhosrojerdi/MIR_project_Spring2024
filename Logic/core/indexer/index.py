@@ -5,7 +5,10 @@ from enum import Enum
 import copy
 from collections import defaultdict
 
-from preprocess import Preprocessor
+import sys
+sys.path.append(r"C:\Users\Asus\PycharmProjects\MIR_project_Spring2024")
+
+from Logic.core.indexer.preprocess import Preprocessor
 
 class Indexes(Enum):
     DOCUMENTS = 'documents'
@@ -380,7 +383,7 @@ class Index:
 
 # TODO: Run the class with needed parameters, then run check methods and finally report the results of check methods
 if __name__ == "__main__":
-    with open('../../tests/IMDB_crawled.json') as f:
+    with open('Logic/tests/IMDB_crawled.json') as f:
         movies = json.load(f)
     preprocessed_movies = []
     for movie in movies:
@@ -388,7 +391,10 @@ if __name__ == "__main__":
             temp_movie = {}
             for field in movie.keys():
                 if field in ["stars", "summaries", "genres"]:
-                    temp_movie[field] =  Preprocessor(movie[field]).preprocess()
+                    if movie[field] == None:
+                        temp_movie[field] = ""
+                    else:
+                        temp_movie[field] =  Preprocessor(movie[field]).preprocess()
                 elif field == "title":
                     temp_movie[field] = Preprocessor([movie[field]]).preprocess()[0]
                 else:
@@ -402,10 +408,10 @@ if __name__ == "__main__":
     indexer.check_add_remove_is_correct()   
     indexer.check_if_indexing_is_good(Indexes.STARS.value, 'Brad')
     
-    # indexer.store_index('./index', Indexes.STARS.value)
-    # indexer.store_index('./index', Indexes.GENRES.value)
-    # indexer.store_index('./index', Indexes.SUMMARIES.value)
-    # indexer.store_index('./index', Indexes.DOCUMENTS.value)
+    # indexer.store_index('Logic/core/indexer/index', Indexes.STARS.value)
+    # indexer.store_index('Logic/core/indexer/index', Indexes.GENRES.value)
+    # indexer.store_index('Logic/core/indexer/index', Indexes.SUMMARIES.value)
+    # indexer.store_index('Logic/core/indexer/index', Indexes.DOCUMENTS.value)
     loaded_index = indexer.load_index('Logic/core/indexer/index/stars_index.json')
     print(indexer.check_if_index_loaded_correctly(index_type=Indexes.STARS.value, loaded_index=loaded_index))
     # indexer.check_if_indexing_is_good(Indexes.DOCUMENTS.value)

@@ -1,133 +1,69 @@
-from .graph import LinkGraph
-from ..indexer.indexes_enum import Indexes
-from ..indexer.index_reader import Index_reader
+from Logic.core.link_analysis.graph import LinkGraph
+from Logic.core.indexer.indexes_enum import Indexes
+from Logic.core.indexer.index_reader import Index_reader
 
 class LinkAnalyzer:
     def __init__(self, root_set):
-        """
-        Initialize the Link Analyzer attributes:
-
-        Parameters
-        ----------
-        root_set: list
-            A list of movie dictionaries with the following keys:
-            "id": A unique ID for the movie
-            "title": string of movie title
-            "stars": A list of movie star names
-        """
-        self.root_set = root_set
+        self.root_set = {movie['id']: movie for movie in root_set}
         self.graph = LinkGraph()
-        self.hubs = []
-        self.authorities = []
-        self.initiate_params()
+        self.hubs = set()
+        self.authorities = set()
+        self.initiate_params(root_set)
 
-    def initiate_params(self):
-        """
-        Initialize links graph, hubs list and authorities list based of root set
-
-        Parameters
-        ----------
-        This function has no parameters. You can use self to get or change attributes
-        """
-        for movie in self.root_set:
-            #TODO
+    def initiate_params(self, root_set):
+        for movie in root_set:
             self.graph.add_node(movie['id'])
-            self.hubs.append(movie['id'])
+            self.hubs.add(movie['id'])
             for star in movie['stars']:
                 self.graph.add_node(star)
                 self.graph.add_edge(movie['id'], star)
-                self.authorities.append(star)
-                
-                
+                self.authorities.add(star)
+
     def expand_graph(self, corpus):
-        """
-        expand hubs, authorities and graph using given corpus
+        existing_movies = set(self.root_set.keys())
+        starred_by_roots = {hub: set(self.graph.get_successors(hub)) for hub in self.hubs}
 
-        Parameters
-        ----------
-        corpus: list
-            A list of movie dictionaries with the following keys:
-            "id": A unique ID for the movie
-            "stars": A list of movie star names
-
-        Note
-        ---------
-        To build the base set, we need to add the hubs and authorities that are inside the corpus
-        and refer to the nodes in the root set to the graph and to the list of hubs and authorities.
-        """
         for movie in corpus:
-            if movie not in self.root_set:
-                starred_by_roots = set()
-                for root_movie_id in self.hubs:
-                    starred_by_roots.update(self.graph.get_successors(root_movie_id))
-                    if any(star in starred_by_roots for star in movie['stars']):
-                        self.graph.add_node(movie['id'])
-                        self.root_set.append(movie)
-                        self.hubs.append(movie['id'])
-                        for star in movie['stars']:
-                            if star not in self.authorities:
-                                self.graph.add_node(star)
-                                self.authorities.append(star)
-                            self.graph.add_edge(movie['id'], star)
-                        
-                
-  
+            if movie['id'] not in existing_movies:
+                common_stars = any(star in starred_by_roots[hub] for hub in self.hubs for star in movie['stars'])
+                if common_stars:
+                    self.graph.add_node(movie['id'])
+                    self.root_set[movie['id']] = movie
+                    self.hubs.add(movie['id'])
+                    for star in movie['stars']:
+                        if star not in self.authorities:
+                            self.graph.add_node(star)
+                            self.authorities.add(star)
+                        self.graph.add_edge(movie['id'], star)
+                    starred_by_roots[movie['id']] = set(movie['stars'])
 
     def hits(self, num_iteration=5, max_result=10):
-        """
-        Return the top movies and actors using the Hits algorithm
+        a_s = {node: 1.0 for node in self.authorities}
+        h_s = {node: 1.0 for node in self.hubs}
 
-        Parameters
-        ----------
-        num_iteration: int
-            Number of algorithm execution iterations
-        max_result: int
-            The maximum number of results to return. If None, all results are returned.
+        for _ in range(num_iteration):
+            h_s = {hub: sum(a_s[auth] for auth in self.graph.get_successors(hub)) for hub in self.hubs}
+            a_s = {auth: sum(h_s[hub] for hub in self.graph.get_predecessors(auth)) for auth in self.authorities}
 
-        Returns
-        -------
-        list
-            List of names of 10 actors with the most scores obtained by Hits algorithm in descending order
-        list
-            List of names of 10 movies with the most scores obtained by Hits algorithm in descending order
-        """
-        
-        a_s = {}
-        h_s = {}
-        
-        for node in self.authorities:
-            a_s[node] = 1
-        for node in self.hubs:
-            h_s[node] = 1
-        
-        for iter in range(num_iteration):
-            for hub in self.hubs:
-                h_s[hub] = sum(a_s[y] for y in self.graph.get_successors(hub))
-            for authority in self.authorities:
-                a_s[authority] = sum(h_s[y] for y in self.graph.get_predecessors(authority))
+        sorted_a_s = sorted(a_s.items(), key=lambda x: x[1], reverse=True)[:max_result]
+        sorted_h_s = sorted(h_s.items(), key=lambda x: x[1], reverse=True)[:max_result]
 
-        a_s = dict(sorted(a_s.items(), key=lambda x: x[1], reverse=True))
-        h_s = dict(sorted(h_s.items(), key=lambda x: x[1], reverse=True))
-        
-        if max_result == None:
-            a_s = list(a_s.keys())
-            h_s = list(h_s.keys())
-        else:
-            a_s = list(a_s.keys())[:max_result]
-            h_s = list(h_s.keys())[max_result]
-            
-        return a_s, h_s
+        top_authorities = [auth for auth, score in sorted_a_s]
+        top_hubs = [hub for hub, score in sorted_h_s]
 
+        return top_authorities, top_hubs
 
-if __name__ == "__main__":
-    # You can use this section to run and test the results of your link analyzer
-    corpus = []    # TODO: it shoud be your crawled data
-    root_set = []   # TODO: it shoud be a subset of your corpus
+# if __name__ == "__main__":
+#     file_path = 'Logic/core/indexer/index/documents_index.json'
+#     with open(file_path, 'r') as file:
+#         corpus = list(json.load(file).values())[:10]
+#     root_set = corpus[:2]
 
-    analyzer = LinkAnalyzer(root_set=root_set)
-    analyzer.expand_graph(corpus=corpus)
-    actors, movies = analyzer.hits(max_result=5)
-    print("Top Actors:")
-    print(*actors, sep=' - ')
-    print("Top Movies:")
-    print(*movies, sep=' - ')
+#     analyzer = LinkAnalyzer(root_set=root_set)
+#     analyzer.expand_graph(corpus=corpus)
+#     actors, movies = analyzer.hits(max_result=5)
+
+#     print("Top Actors:")
+#     print(*actors, sep=' - ')
+#     print("Top Movies:")
+#     print(*movies, sep=' - ')
