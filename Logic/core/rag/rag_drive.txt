@@ -1,0 +1,4 @@
+while trying to add RAG_MASK.ipynb to the git repository, some error occured saying the file can't be processed by github.
+
+So here is the drive link for my RAG_MASK.ipynb:
+https://colab.research.google.com/drive/1QrTiyCobtc0sHp6LxVQvOa1fUehs6zhi?usp=sharing
